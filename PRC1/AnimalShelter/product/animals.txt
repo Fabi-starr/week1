@@ -1,0 +1,3 @@
+babu 3 10
+pupy 2 3
+zebra 3 2

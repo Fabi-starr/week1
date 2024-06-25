@@ -1,28 +1,25 @@
 PN=animal_shelter
-BINDIR=bin
 
 CFLAGS=-Wall -Werror -Iproduct -I../Unity -Itest
 
-SHARED=product/administration.c
-TEST=$(SHARED) ../Unity/unity.c
+#add your own other c files here
+SHARED=	product/administration.c  
+	                         
+TEST=$(SHARED) \
+             test/Unity/unity.c 
 
-all: $(BINDIR) $(BINDIR)/$(PN)
+all: 
+	gcc $(CFLAGS) product/$(PN).c $(SHARED) -o $(PN) 
 
-$(BINDIR):
-	mkdir -p $(BINDIR)
-
-$(BINDIR)/$(PN): product/$(PN).c $(SHARED)
-	gcc $(CFLAGS) $^ -o $@ 
-
-adminTest: $(BINDIR) $(BINDIR)/administrationTest
-
-$(BINDIR)/administrationTest: test/administration_test.c $(TEST)
-	gcc $(CFLAGS) $^ -o $@ 
-
+adminTest:
+	gcc $(CFLAGS) test/administration_test.c $(TEST) -o administrationTest 
+   
 clean:
-	rm -rf $(BINDIR)/*
+	rm -rf administrationTest $(PN) 
 
-valgrind: $(BINDIR)/$(PN)
-	valgrind ./$(BINDIR)/$(PN)
+valgrind: 
+	valgrind ./$(PN)
 
-.PHONY: clean adminTest valgrind
+
+
+.PHONY: clean test valgrind

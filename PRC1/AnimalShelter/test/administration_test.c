@@ -1,62 +1,105 @@
+#include "Unity/unity.h"
+#include "../product/administration.h"
 #include <stdio.h>
 #include <string.h>
-#include "administration.h"
-#include "../Unity/unity.h"  // Assuming Unity framework is located in the parent directory
 
-// Mock data for testing
-#define MAX_ANIMALS_TEST 5
-ANIMAL testAnimals[MAX_ANIMALS_TEST] = {
-    {"Tom", Cat, 3},
-    {"Buddy", Dog, 5},
-    {"Coco", Dog, 2},
-    {"Charlie", Parrot, 1},
-    {"Whiskers", Cat, 4}
-};
+#define MAX_TEST_ANIMALS 5
+ANIMAL testAnimalArray[MAX_TEST_ANIMALS];
+int numTestAnimals = 0;
 
 void setUp(void) {
-    // Initialize test environment if needed
+    numTestAnimals = 0;
 }
 
 void tearDown(void) {
-    // Clean up test environment if needed
 }
 
 void test_addAnimal(void) {
-    ANIMAL addedAnimal = {"Max", Dog, 7};
-    TEST_ASSERT_EQUAL_INT(0, addAnimal(&addedAnimal, testAnimals, MAX_ANIMALS_TEST));
-    TEST_ASSERT_EQUAL_STRING("Max", testAnimals[MAX_ANIMALS_TEST - 1].Name);
+    ANIMAL animal = {"TestCat", 3, Cat};
+    TEST_ASSERT_EQUAL_INT(0, addAnimal(&animal, testAnimalArray, numTestAnimals));
+    numTestAnimals++;
 }
 
 void test_removeAnimal(void) {
-    TEST_ASSERT_EQUAL_INT(1, removeAnimal("Coco", testAnimals, MAX_ANIMALS_TEST));
-    TEST_ASSERT_EQUAL_INT(0, removeAnimal("Nonexistent", testAnimals, MAX_ANIMALS_TEST));
-}
+    ANIMAL testAnimals[MAX_TEST_ANIMALS] = {
+        {"TestDog", 2, Dog},
+        {"TestParrot", 1, Parrot},
+        {"TestGuineaPig", 4, GuineaPig},
+        {"TestCat", 3, Cat},
+        {"TestDog", 5, Dog}
+    };
+    memcpy(testAnimalArray, testAnimals, sizeof(testAnimals));
+    numTestAnimals = MAX_TEST_ANIMALS;
 
-void test_sortAnimalsByAge(void) {
-    TEST_ASSERT_EQUAL_INT(0, sortAnimalsByAge(testAnimals, MAX_ANIMALS_TEST));
-    TEST_ASSERT_GREATER_OR_EQUAL(testAnimals[0].Age, testAnimals[MAX_ANIMALS_TEST - 1].Age);
+    TEST_ASSERT_EQUAL_INT(2, removeAnimal("TestDog", testAnimalArray, numTestAnimals));
+    numTestAnimals -= 2;
 }
 
 void test_sortAnimalsByName(void) {
-    TEST_ASSERT_EQUAL_INT(0, sortAnimalsByName(testAnimals, MAX_ANIMALS_TEST));
-    TEST_ASSERT_TRUE(strcmp(testAnimals[0].Name, "Buddy") < 0);
-    TEST_ASSERT_TRUE(strcmp(testAnimals[1].Name, "Coco") < 0);
-    TEST_ASSERT_TRUE(strcmp(testAnimals[2].Name, "Charlie") < 0);
+    ANIMAL testAnimals[MAX_TEST_ANIMALS] = {
+        {"B", 5, Cat},
+        {"A", 3, Dog},
+        {"D", 2, Parrot},
+        {"C", 4, GuineaPig},
+        {"E", 1, Dog}
+    };
+    memcpy(testAnimalArray, testAnimals, sizeof(testAnimals));
+    numTestAnimals = MAX_TEST_ANIMALS;
+
+    sortAnimalsByName(testAnimalArray, numTestAnimals);
+
+    TEST_ASSERT_EQUAL_STRING("A", testAnimalArray[0].Name);
+    TEST_ASSERT_EQUAL_STRING("B", testAnimalArray[1].Name);
+    TEST_ASSERT_EQUAL_STRING("C", testAnimalArray[2].Name);
+    TEST_ASSERT_EQUAL_STRING("D", testAnimalArray[3].Name);
+    TEST_ASSERT_EQUAL_STRING("E", testAnimalArray[4].Name);
+}
+
+void test_sortAnimalsByAge(void) {
+    ANIMAL testAnimals[MAX_TEST_ANIMALS] = {
+        {"B", 1, Cat},
+        {"A", 2, Dog},
+        {"D", 3, Parrot},
+        {"C", 4, GuineaPig},
+        {"E", 5, Dog}
+    };
+    memcpy(testAnimalArray, testAnimals, sizeof(testAnimals));
+    numTestAnimals = MAX_TEST_ANIMALS;
+
+    sortAnimalsByAge(testAnimalArray, numTestAnimals);
+
+    TEST_ASSERT_EQUAL_INT(1, testAnimalArray[0].Age);
+    TEST_ASSERT_EQUAL_INT(2, testAnimalArray[1].Age);
+    TEST_ASSERT_EQUAL_INT(3, testAnimalArray[2].Age);
+    TEST_ASSERT_EQUAL_INT(4, testAnimalArray[3].Age);
+    TEST_ASSERT_EQUAL_INT(5, testAnimalArray[4].Age);
 }
 
 void test_findAnimalByName(void) {
+    ANIMAL testAnimals[MAX_TEST_ANIMALS] = {
+        {"TestDog", 2, Dog},
+        {"TestParrot", 1, Parrot},
+        {"TestGuineaPig", 4, GuineaPig},
+        {"TestCat", 3, Cat},
+        {"TestDog", 5, Dog}
+    };
+    memcpy(testAnimalArray, testAnimals, sizeof(testAnimals));
+    numTestAnimals = MAX_TEST_ANIMALS;
+
     ANIMAL foundAnimal;
-    TEST_ASSERT_EQUAL_INT(1, findAnimalByName("Tom", testAnimals, MAX_ANIMALS_TEST, &foundAnimal));
-    TEST_ASSERT_EQUAL_STRING("Tom", foundAnimal.Name);
-    TEST_ASSERT_EQUAL_INT(0, findAnimalByName("Nonexistent", testAnimals, MAX_ANIMALS_TEST, &foundAnimal));
+    int found = findAnimalByName("TestCat", testAnimalArray, numTestAnimals, &foundAnimal);
+    TEST_ASSERT_EQUAL_INT(1, found);
+    TEST_ASSERT_EQUAL_STRING("TestCat", foundAnimal.Name);
 }
 
 int main(void) {
-    UNITY_BEGIN();
-    RUN_TEST(test_addAnimal);
-    RUN_TEST(test_removeAnimal);
-    RUN_TEST(test_sortAnimalsByAge);
-    RUN_TEST(test_sortAnimalsByName);
-    RUN_TEST(test_findAnimalByName);
-    return UNITY_END();
+    UnityBegin( );
+
+    RUN_TEST(test_addAnimal, __LINE__);
+    RUN_TEST(test_removeAnimal, __LINE__);
+    RUN_TEST(test_sortAnimalsByAge, __LINE__);
+    RUN_TEST(test_sortAnimalsByName, __LINE__);
+    RUN_TEST(test_findAnimalByName, __LINE__);
+
+    return UnityEnd();
 }

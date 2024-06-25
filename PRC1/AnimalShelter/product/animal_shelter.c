@@ -1,158 +1,177 @@
 #include <stdio.h>
 #include <string.h>
-#include "animal.h"
-#include "administration.h"  // Include administration header
+#include <ctype.h>
+#include <stdlib.h>
+#include "administration.h"
 
-#define MaxAnimals 100  // Maximum number of animals in the shelter
+#define FILENAME "animals.txt"
+#define MAX_INPUT_LENGTH 10
+#define MAX_ANIMALS 5
 
-ANIMAL animals[MaxAnimals];  // Array to store animals
-int numAnimals = 0;  // Current number of animals in the shelter
+const char* speciesNames[] = {"Cat", "Dog", "GuineaPig", "Parrot"};
 
-// Function to show all animals
-void showAnimals() {
-    printf("List of Animals:\n");
-    if (numAnimals == 0) {
-        printf("No animals currently in the shelter.\n");
-    } else {
-        for (int i = 0; i < numAnimals; i++) {
-            printf("Name: %s, Species: ", animals[i].Name);
-            switch (animals[i].Species) {
-                case Cat:
-                    printf("Cat");
-                    break;
-                case Dog:
-                    printf("Dog");
-                    break;
-                case GuineaPig:
-                    printf("Guinea Pig");
-                    break;
-                case Parrot:
-                    printf("Parrot");
-                    break;
-                default:
-                    printf("Unknown");
-                    break;
+void addAnimalPrompt(ANIMAL* animalArray, int* numAnimals) {
+    ANIMAL animal;
+    while (1) {
+        int isValidName = 1; // Resetting for each loop iteration
+        printf("Enter animal name: ");
+        scanf("%s", animal.Name);
+
+        for (int i = 0; animal.Name[i] != '\0'; i++) {
+            if (!isalpha(animal.Name[i])) {
+                isValidName = 0;
+                break;
             }
-            printf(", Age: %d\n", animals[i].Age);
+        }
+        if (!isValidName) {
+            printf("Enter name with only alphabetic characters.\n");
+            continue;
+        }
+        break; // Name is valid, proceed to next input
+    }
+
+    while (1) {
+        printf("Choose the species of your animal (0: Cat, 1: Dog, 2: GuineaPig, 3: Parrot): ");
+        scanf("%d", (int*)&animal.Species);
+        if (animal.Species < 0 || animal.Species > 3) {
+            printf("You have to choose from our species only: 0, 1, 2, 3.\n");
+            continue;
+        }
+        break; // Species is valid, proceed to next input
+    }
+
+    while (1) {
+        printf("Enter age of animal between 0 and 200: ");
+        scanf("%d", &animal.Age);
+        if (animal.Age < 0 || animal.Age > 200) {
+            printf("Age must be between 0 and 200.\n");
+            continue;
+        }
+        break; // Age is valid, proceed to add the animal
+    }
+
+    if (addAnimal(&animal, animalArray, *numAnimals) == 0) {
+        (*numAnimals)++;
+        printf("Animal added successfully!\n");
+    } else {
+        printf("Our shelter is full! Failed to add animal.\n");
+    }
+}
+
+void removeAnimalPrompt(ANIMAL* animalArray, int* numAnimals) {
+    char name[MaxNameLength];
+    printf("Enter the name of the animal you want to remove: ");
+    scanf("%s", name);
+    int count = removeAnimal(name, animalArray, *numAnimals);
+    if (count > 0) {
+        *numAnimals -= count;
+        printf("%d animal(s) removed successfully!\n", count);
+    } else {
+        printf("No animal found with the given name.\n");
+    }
+}
+
+void displayAnimals(const ANIMAL* animalArray, int numAnimals) {
+    if (numAnimals == 0) {
+        printf("No animals in the shelter.\n");
+    } else {
+        printf("\nANIMALS IN OUR SHELTER NOW\n===============================\n");
+        for (int i = 0; i < numAnimals; i++) {
+            printf("%s, Species: %s, Age: %d\n", animalArray[i].Name, speciesNames[animalArray[i].Species], animalArray[i].Age);
         }
     }
 }
 
-// Function to add an animal
-void addAnimalMenu() {
-    if (numAnimals >= MaxAnimals) {
-        printf("Cannot add more animals. Shelter full.\n");
-        return;
-    }
-    
-    ANIMAL newAnimal;
-    printf("Enter name of the animal: ");
-    scanf(" %[^\n]", newAnimal.Name);
-    
-    int speciesChoice;
-    printf("Enter species of the animal (0: Cat, 1: Dog, 2: Guinea Pig, 3: Parrot): ");
-    scanf("%d", &speciesChoice);
-    if (speciesChoice < 0 || speciesChoice > 3) {
-        printf("Invalid species choice.\n");
-        return;
-    }
-    newAnimal.Species = (SPECIES)speciesChoice;
-    
-    printf("Enter age of the animal: ");
-    scanf("%d", &newAnimal.Age);
-    
-    if (addAnimal(&newAnimal, animals, numAnimals) == 0) {
-        numAnimals++;
-        printf("Animal added successfully.\n");
+void sortAnimalsPrompt(ANIMAL* animalArray, int numAnimals) {
+    int choice;
+    printf("Enter your choice of sorting: 1. Age 2. Name\n");
+    scanf("%d", &choice);
+    if (choice == 1) {
+        sortAnimalsByAge(animalArray, numAnimals);
+        printf("Animals are sorted by age.\n");
+    } else if (choice == 2) {
+        sortAnimalsByName(animalArray, numAnimals);
+        printf("Animals are sorted by name.\n");
     } else {
-        printf("Failed to add animal.\n");
+        printf("Invalid choice.\n");
     }
 }
 
-// Function to remove an animal by name
-void removeAnimalMenu() {
-    char nameToRemove[MaxNameLength];
-    printf("Enter the name of the animal to remove: ");
-    scanf(" %[^\n]", nameToRemove);
-    
-    int removedCount = removeAnimal(nameToRemove, animals, numAnimals);
-    if (removedCount > 0) {
-        numAnimals -= removedCount;
-        printf("Animal '%s' removed successfully.\n", nameToRemove);
-    } else {
-        printf("Animal '%s' not found in the shelter.\n", nameToRemove);
-    }
-}
-
-// Function to find an animal by name
-void findAnimalByNameMenu() {
-    char nameToFind[MaxNameLength];
+void findAnimalPrompt(const ANIMAL* animalArray, int numAnimals) {
+    char name[MaxNameLength];
     printf("Enter the name of the animal to find: ");
-    scanf(" %[^\n]", nameToFind);
-    
+    scanf("%s", name);
+
     ANIMAL foundAnimal;
-    if (findAnimalByName(nameToFind, animals, numAnimals, &foundAnimal)) {
-        printf("Animal Found:\n");
-        printf("Name: %s, Species: ", foundAnimal.Name);
-        switch (foundAnimal.Species) {
-            case Cat:
-                printf("Cat");
-                break;
-            case Dog:
-                printf("Dog");
-                break;
-            case GuineaPig:
-                printf("Guinea Pig");
-                break;
-            case Parrot:
-                printf("Parrot");
-                break;
-            default:
-                printf("Unknown");
-                break;
-        }
-        printf(", Age: %d\n", foundAnimal.Age);
+    if (findAnimalByName(name, animalArray, numAnimals, &foundAnimal)) {
+        printf("Animal found:\nName: %s, Species: %s, Age: %d\n", foundAnimal.Name, speciesNames[foundAnimal.Species], foundAnimal.Age);
     } else {
-        printf("Animal '%s' not found in the shelter.\n", nameToFind);
+        printf("No animal with the name %s was found.\n", name);
     }
 }
 
-// Main function
+void saveAndExit(const ANIMAL* animalArray, int numAnimals) {
+    saveAnimalsToFile(FILENAME, animalArray, numAnimals);
+    printf("Exiting...\n");
+}
+
 int main(void) {
     printf("PRC assignment 'Animal Shelter' (version April 2019)\n");
-    
+    int numAnimals = 0;
     int choice = -1;
-    while (choice != 0) {
+    ANIMAL animalArray[MAX_ANIMALS];
+    loadAnimalsFromFile(FILENAME, animalArray, &numAnimals); // Load animals from file
+
+    while (1) {
         printf("\nMENU\n====\n");
-        printf("1: Show Animals\n");
-        printf("2: Add Animal\n");
-        printf("3: Remove Animal\n");
-        printf("4: Find Animal by name\n");
-        printf("0: Quit\n");
+        printf("1: Add Animal\n");
+        printf("2: Remove Animal\n");
+        printf("3: Show Animals\n");
+        printf("4: Find Animal\n");
+        printf("5: Sort Animals\n");
+        printf("0: Save and Exit\n");
+        printf("Enter your choice: ");
         
-        scanf("%d", &choice);
+        char input[MAX_INPUT_LENGTH];
+        scanf("%s", input);
         
+        // Check if the input is a digit only
+        int isValidInput = 1;
+        for (int i = 0; input[i] != '\0'; i++) {
+            if (!isdigit(input[i])) {
+                isValidInput = 0;
+                break;
+            }
+        }
+
+        if (!isValidInput) {
+            printf("Enter digits only\n");
+            continue;
+        }
+
         switch (choice) {
             case 1:
-                showAnimals();
+                addAnimalPrompt(animalArray, &numAnimals);
                 break;
             case 2:
-                addAnimalMenu();
+                removeAnimalPrompt(animalArray, &numAnimals);
                 break;
             case 3:
-                removeAnimalMenu();
+                displayAnimals(animalArray, numAnimals);
                 break;
             case 4:
-                findAnimalByNameMenu();
+                findAnimalPrompt(animalArray, numAnimals);
+                break;
+            case 5:
+                sortAnimalsPrompt(animalArray, numAnimals);
                 break;
             case 0:
-                printf("Exiting program.\n");
-                break;
+                saveAndExit(animalArray, numAnimals);
+                return 0;
             default:
-                printf("ERROR: Invalid choice: %d\n", choice);
-                break;
+                printf("Invalid choice. Please try again.\n");
         }
     }
-    
+
     return 0;
 }
